@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Diffusion Limited Aggregation</title>
+        <style>
+            #container {
+                display: flex;
+            }
+            #buttons {
+                margin-left: 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+                justify-content: center;
+            }
+        </style>
+        <!-- <script src="https://unpkg.com/detect-collisions@9.1.1"></script> -->
+    </head>
+    <body>
+        <div id="container">
+            <svg id="mySVG" width="800" height="600">
+                <circle
+                    id="redCircle"
+                    cx="50"
+                    cy="50"
+                    r="10"
+                    fill="red"
+                ></circle>
+                <circle
+                    id="blueCircle"
+                    cx="150"
+                    cy="150"
+                    r="10"
+                    fill="blue"
+                ></circle>
+            </svg>
+            <div id="buttons">
+                <button id="playButton">Play</button>
+                <button id="pauseButton">Pause</button>
+                <button id="resetButton">Reset</button>
+                <label for="particleNumber">Number of Particles:</label>
+                <input id="particleNumber" type="number" value="100" min="0" />
+                <input
+                    id="particleSlider"
+                    type="range"
+                    min="0"
+                    max="500"
+                    value="100"
+                />
+                <label for="diffusionSpeed">Diffusion Speed:</label>
+                <input
+                    id="diffusionSpeed"
+                    type="number"
+                    value="1"
+                    min="0"
+                    step="0.1"
+                />
+                <input
+                    id="speedSlider"
+                    type="range"
+                    min="0"
+                    max="5"
+                    value="1"
+                    step="0.1"
+                />
+                <button id="downloadButton">Download</button>
+            </div>
+        </div>
+
+        <script>
+            let selectedElement, offset, transform;
+            const mySVG = document.getElementById("mySVG");
+            const redCircle = document.getElementById("redCircle");
+            const blueCircle = document.getElementById("blueCircle");
+
+            function selectElement(evt) {
+                selectedElement = evt.target;
+                offset = getMousePosition(evt);
+                // Get all the transforms currently on this element
+                var transforms = selectedElement.transform.baseVal;
+                if (
+                    transforms.length === 0 ||
+                    transforms.getItem(0).type !==
+                        SVGTransform.SVG_TRANSFORM_TRANSLATE
+                ) {
+                    // Create an transform that translates by (0, 0)
+                    var translate = mySVG.createSVGTransform();
+                    translate.setTranslate(0, 0);
+                    selectedElement.transform.baseVal.insertItemBefore(
+                        translate,
+                        0
+                    );
+                }
+                transform = transforms.getItem(0);
+                offset.x -= transform.matrix.e;
+                offset.y -= transform.matrix.f;
+            }
+
+            function drag(evt) {
+                if (selectedElement) {
+                    evt.preventDefault();
+                    var coord = getMousePosition(evt);
+                    transform.setTranslate(
+                        coord.x - offset.x,
+                        coord.y - offset.y
+                    );
+                }
+            }
+
+            function deselectElement(evt) {
+                if (selectedElement) {
+                    // Update cx and cy attributes based on the transform
+                    selectedElement.setAttribute(
+                        "cx",
+                        parseFloat(selectedElement.getAttribute("cx")) +
+                            transform.matrix.e
+                    );
+                    selectedElement.setAttribute(
+                        "cy",
+                        parseFloat(selectedElement.getAttribute("cy")) +
+                            transform.matrix.f
+                    );
+
+                    // Remove the transform
+                    selectedElement.transform.baseVal.removeItem(0);
+                }
+
+                selectedElement = null;
+            }
+
+            function getMousePosition(evt) {
+                var CTM = mySVG.getScreenCTM();
+                return {
+                    x: (evt.clientX - CTM.e) / CTM.a,
+                    y: (evt.clientY - CTM.f) / CTM.d,
+                };
+            }
+
+            // Add event listeners for the circles
+            redCircle.addEventListener("mousedown", selectElement);
+            blueCircle.addEventListener("mousedown", selectElement);
+            window.addEventListener("mousemove", drag);
+            window.addEventListener("mouseup", deselectElement);
+
+            let particles = [];
+            let numParticles = parseInt(
+                document.getElementById("particleNumber").value
+            );
+            const particleRadius = 3;
+            let diffusionSpeed = parseFloat(
+                document.getElementById("diffusionSpeed").value
+            );
+
+            // Add event listeners for the number of particles slider and input field
+            document
+                .getElementById("particleSlider")
+                .addEventListener("input", (event) => {
+                    numParticles = parseInt(event.target.value);
+                    document.getElementById("particleNumber").value =
+                        numParticles;
+                });
+
+            document
+                .getElementById("particleNumber")
+                .addEventListener("input", (event) => {
+                    numParticles = parseInt(event.target.value);
+                    document.getElementById("particleSlider").value =
+                        numParticles;
+                });
+
+            // Add event listeners for the diffusion speed slider and input field
+            document
+                .getElementById("speedSlider")
+                .addEventListener("input", (event) => {
+                    diffusionSpeed = parseFloat(event.target.value);
+                    document.getElementById("diffusionSpeed").value =
+                        diffusionSpeed;
+                });
+
+            document
+                .getElementById("diffusionSpeed")
+                .addEventListener("input", (event) => {
+                    diffusionSpeed = parseFloat(event.target.value);
+                    document.getElementById("speedSlider").value =
+                        diffusionSpeed;
+                });
+
+            function initParticles() {
+                // Clear the previous particles if any
+                particles.forEach((particle) => particle.element.remove());
+                particles = [];
+
+                // Create new particles
+                for (let i = 0; i < numParticles; i++) {
+                    let particle = document.createElementNS(
+                        "http://www.w3.org/2000/svg",
+                        "circle"
+                    );
+                    particle.setAttribute("cx", redCircle.getAttribute("cx"));
+                    particle.setAttribute("cy", redCircle.getAttribute("cy"));
+                    particle.setAttribute("r", particleRadius);
+                    particle.setAttribute("fill", "black");
+                    mySVG.appendChild(particle);
+
+                    particles.push({
+                        element: particle,
+                        state: "alive",
+                    });
+                }
+            }
+
+            // Run the initial setup
+            initParticles();
+
+            // Add event listener for the reset button
+            document
+                .getElementById("resetButton")
+                .addEventListener("click", () => {
+                    if (playing) {
+                        playing = false;
+                        cancelAnimationFrame(animationFrame);
+                    }
+                    initParticles();
+                });
+
+            // Main loop
+            let playing = false;
+            let animationFrame;
+            const mainLoop = () => {
+                // Check each particle
+                particles.forEach((particle) => {
+                    if (particle.state === "alive") {
+                        // Move particle
+                        let dx = (Math.random() * 2 - 1) * diffusionSpeed; // random value between -1 and 1
+                        let dy = (Math.random() * 2 - 1) * diffusionSpeed;
+                        let x =
+                            parseFloat(particle.element.getAttribute("cx")) +
+                            dx;
+                        let y =
+                            parseFloat(particle.element.getAttribute("cy")) +
+                            dy;
+                        particle.element.setAttribute("cx", x);
+                        particle.element.setAttribute("cy", y);
+
+                        // Check for collision
+                        let collision = checkCollision(
+                            particle.element,
+                            blueCircle
+                        );
+                        if (collision) {
+                            particle.state = "dead";
+                            particle.element.setAttribute("fill", "grey");
+                        }
+                    }
+                });
+
+                if (playing) {
+                    animationFrame = requestAnimationFrame(mainLoop);
+                }
+            };
+
+            function checkCollision(particle, target) {
+                let dx =
+                    parseFloat(particle.getAttribute("cx")) -
+                    parseFloat(target.getAttribute("cx"));
+                let dy =
+                    parseFloat(particle.getAttribute("cy")) -
+                    parseFloat(target.getAttribute("cy"));
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                return (
+                    distance <
+                    parseFloat(particle.getAttribute("r")) +
+                        parseFloat(target.getAttribute("r"))
+                );
+            }
+
+            // Add event listeners for the play and pause buttons
+            document
+                .getElementById("playButton")
+                .addEventListener("click", () => {
+                    if (!playing) {
+                        playing = true;
+                        animationFrame = requestAnimationFrame(mainLoop);
+                    }
+                });
+
+            document
+                .getElementById("pauseButton")
+                .addEventListener("click", () => {
+                    if (playing) {
+                        playing = false;
+                        cancelAnimationFrame(animationFrame);
+                    }
+                });
+
+            document
+                .getElementById("downloadButton")
+                .addEventListener("click", () => {
+                    var svgData = new XMLSerializer().serializeToString(
+                        document.getElementById("mySVG")
+                    );
+                    var preface = '<?xml version="1.0" standalone="no"?>\r\n';
+                    var svgBlob = new Blob([preface, svgData], {
+                        type: "image/svg+xml;charset=utf-8",
+                    });
+                    var svgUrl = URL.createObjectURL(svgBlob);
+                    var downloadLink = document.createElement("a");
+                    downloadLink.href = svgUrl;
+                    downloadLink.download = "newSVG.svg";
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                });
+        </script>
+    </body>
+</html>
