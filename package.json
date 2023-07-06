@@ -1,0 +1,34 @@
+{
+  "name": "diffusionlimitedaggregation",
+  "version": "1.0.0",
+  "description": "Simulate particles undergoing random walks and clumping to form Lichtenberg figure-like tree structures",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amoose136/DiffusionLimitedAggregation.git"
+  },
+  "keywords": [
+    "Diffusion",
+    "DLA",
+    "Lichtenberg",
+    "Particle",
+    "Random",
+    "Walk"
+  ],
+  "author": "Amos Manneschmidt",
+  "license": "Unlicense",
+  "bugs": {
+    "url": "https://github.com/amoose136/DiffusionLimitedAggregation/issues"
+  },
+  "homepage": "https://github.com/amoose136/DiffusionLimitedAggregation#readme",
+  "dependencies": {
+    "detect-collisions": "^9.1.1",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "browserify": "^17.0.0"
+  }
+}
