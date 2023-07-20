@@ -33,6 +33,7 @@
                     fill="blue"
                 ></circle>
             </svg>
+            <div style="display: none"><svg id="downloadSVG"></svg></div>
             <div id="buttons">
                 <button id="playButton">Play</button>
                 <button id="pauseButton">Pause</button>
@@ -62,6 +63,26 @@
                     value="1"
                     step="0.1"
                 />
+                <label for="attractiveForce">Attractive Force:</label>
+                <input
+                    type="range"
+                    id="attractiveForce"
+                    name="attractiveForce"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value="0.1"
+                />
+                <input
+                    type="number"
+                    id="attractiveForceNumber"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value="0.1"
+                />
+                <label for="hideParticles">Hide Particles:</label>
+                <input type="checkbox" id="hideParticles" />
                 <button id="downloadButton">Download</button>
             </div>
         </div>
